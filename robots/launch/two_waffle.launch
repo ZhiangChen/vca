@@ -1,0 +1,36 @@
+<launch>
+
+<include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/models/turtlebot3.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+
+<!-- robot 0 -->
+<group ns="robot0">
+  <param name="tf_prefix" value="robot0" />
+    <include file="$(find robots)/launch/waffle.launch" >
+	  <arg name="x_pos" default="-2.0"/>
+	  <arg name="y_pos" default="-0.5"/>
+	  <arg name="z_pos" default="0.0"/>
+      <arg name="robot_name" value="robot0" />
+    </include>
+</group>
+
+  <!-- robot 1 -->
+  <group ns="robot1">
+    <param name="tf_prefix" value="robot1" />
+    <include file="$(find robots)/launch/waffle.launch" >
+	  <arg name="x_pos" default="2.0"/>
+	  <arg name="y_pos" default="-0.5"/>
+	  <arg name="z_pos" default="0.0"/>
+      <arg name="robot_name" value="robot1" />
+    </include>
+  </group>
+
+
+</launch>
