@@ -1,0 +1,38 @@
+<launch>
+    <master auto="start"/>
+  <arg name="model" default="waffle" doc="model type [burger, waffle, waffle_pi]"/>  
+
+<group ns="robot0">
+  <arg name="robot_name" value="robot0" />
+  <param name="tf_prefix" value="robot0" />
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <remap from="map" to="/map" />   
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+    <rosparam file="$(find robots)/param/costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find robots)/param/costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find robots)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/dwa_local_planner_params.yaml" command="load" />
+  </node>
+</group>
+
+<group ns="robot1">
+  <arg name="robot_name" value="robot1" />
+  <param name="tf_prefix" value="robot1" />
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <remap from="map" to="/map" />  
+    <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+    <rosparam file="$(find robots)/param/costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find robots)/param/costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find robots)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find robots)/param/dwa_local_planner_params.yaml" command="load" />
+
+  </node>
+</group>
+
+
+</launch>
