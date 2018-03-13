@@ -4,6 +4,7 @@
 
 #include <switch_pos/robot_walk.h>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -12,19 +13,31 @@ Robot_walk::Robot_walk(ros::NodeHandle* nh, string robot_name): nh_(*nh), robot_
 	vel_topic_ = robot_name_ + "/cmd_vel";
 	scan_topic_ = robot_name_ + "/scan";
 	r_scan_topic_ = robot_name_ +"/r_scan";
+	odom_topic_ = robot_name_ + "/odom";
+	goal_topic_ = robot_name_ + "/move_base_simple/goal";
 
 	scan_sub_ = nh_.subscribe(scan_topic_, 1, &Robot_walk::readScanCallback, this);
+	odom_sub_ = nh_.subscribe(odom_topic_, 1, &Robot_walk::readOdomCallback, this);
 	r_scan_pub_ = nh_.advertise<sensor_msgs::LaserScan>(r_scan_topic_, 1, true);
 	cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(vel_topic_, 1, true);
+	goal_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(goal_topic_, 1, true);
 
 	moveForwardCommand_.linear.x = 0.2;
 	turnLeftCommand_.angular.z = 0.4;
 	turnRightCommand_.angular.z = -0.4;
 	srand(time(NULL));
-	gotData_ = false;
+	gotScan_ = false;
+	gotOdom_ = false;
 
 	ROS_INFO("Robot_walk initialized!");
 }
+
+void Robot_walk::readOdomCallback(const nav_msgs::Odometry odom)
+{
+	curPose_ = odom.pose.pose;
+	gotOdom_ = true;
+}
+
 
 void Robot_walk::readScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan)
 {
@@ -64,7 +77,7 @@ void Robot_walk::readScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan)
 	}
 
 	r_scan_pub_.publish(r_scan);
-	gotData_ = true;
+	gotScan_ = true;
 }
 
 void Robot_walk::random_walk(double sec)
@@ -74,14 +87,14 @@ void Robot_walk::random_walk(double sec)
 	double t = 0;
 	while(t < sec)
 	{
-		
-		while(!gotData_)
+
+		gotScan_ = false;		
+		while(!gotScan_)
 		{
 			ros::spinOnce();
 			ros::Duration(0.05).sleep();
 			t +=0.05;
 		}
-		gotData_ = false;
 		if (isObstacle_) 
 		{
 			if(rand()/RAND_MAX<0.5)
@@ -103,7 +116,37 @@ void Robot_walk::random_walk(double sec)
 		r.sleep();
 		t += incrt;
 	}
+	cmd_vel_pub_.publish(stopCommand_);
 }
 
+bool Robot_walk::goal_walk(geometry_msgs::Pose goal)
+{
+	geometry_msgs::PoseStamped PS;
+	PS.header.frame_id = "map";
+	PS.pose = goal;
+	goal_pub_.publish(PS);
+	
+	geometry_msgs::Pose curPos = getPose();
+	double x = goal.position.x - curPos.position.x;
+	double y = goal.position.y - curPos.position.y;
+	double z = goal.position.z - curPos.position.z; 
+	double dist = sqrt(x*x + y*y + z*z);
+	if (dist < 0.02)
+		return true;
+	else 
+		return false;
+	
+}
+
+geometry_msgs::Pose Robot_walk::getPose()
+{
+	gotOdom_ = false;
+	while(!gotOdom_)
+	{
+		ros::spinOnce();
+		ros::Duration(0.05).sleep();
+	}
+	return curPose_;
+}
 
 

@@ -12,12 +12,18 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "switch_pos");
 	ros::NodeHandle nh;
-	Robot_walk Rw(&nh, "robot0");
+	Robot_walk Rw0(&nh, "robot0");
+	Robot_walk Rw1(&nh, "robot1");
+	geometry_msgs::Pose ps0 = Rw0.getPose();
+	geometry_msgs::Pose ps1 = Rw1.getPose();
 
 	while(ros::ok())
 	{
-		Rw.random_walk(5);
-		ROS_INFO("Done Random Walk");
+		if(!Rw0.goal_walk(ps1))
+			if ( !Rw1.goal_walk(ps0))
+				ROS_INFO("switching positions...");
+
+		ros::Duration(5.0).sleep();		
 	}
 	return 0;
 }

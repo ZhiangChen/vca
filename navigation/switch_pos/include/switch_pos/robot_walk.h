@@ -24,7 +24,10 @@ SOFTWARE.*/
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <sensor_msgs/LaserScan.h>
+#include <nav_msgs/Odometry.h>
 
 using namespace std;
 
@@ -33,12 +36,15 @@ using namespace std;
 #define VEL_RATE 20
 
 
+
 class Robot_walk
 {
 public:
 	Robot_walk(ros::NodeHandle* nh, string robot_name);
 	void random_walk(double sec);
-	bool goal_walk(geometry_msgs::Twist goal);
+	bool goal_walk(geometry_msgs::Pose goal);
+	geometry_msgs::Pose getPose();
+	
 
 private:
 	ros::NodeHandle nh_;
@@ -46,17 +52,27 @@ private:
 	string vel_topic_;
 	string scan_topic_;
 	string r_scan_topic_;
+	string odom_topic_;
+	string goal_topic_;
+
 	ros::Subscriber scan_sub_;
+	ros::Subscriber odom_sub_;
 	ros::Publisher cmd_vel_pub_;
 	ros::Publisher r_scan_pub_;
+	ros::Publisher goal_pub_;
 	bool isObstacle_;
-	bool gotData_;
+	bool gotScan_;
+	bool gotOdom_;
+	geometry_msgs::Pose curPose_;
+
     geometry_msgs::Twist moveForwardCommand_;
     geometry_msgs::Twist turnLeftCommand_;
 	geometry_msgs::Twist turnRightCommand_;
+	geometry_msgs::Twist stopCommand_;
 	
 
 	void readScanCallback(const sensor_msgs::LaserScan::ConstPtr &scan);
+	void readOdomCallback(const nav_msgs::Odometry odom);
 	
 };
 
