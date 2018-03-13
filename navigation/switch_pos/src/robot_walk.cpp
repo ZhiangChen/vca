@@ -85,11 +85,11 @@ void Robot_walk::random_walk(double sec)
 	ros::Rate r(VEL_RATE);
 	double incrt = 1.0/VEL_RATE;
 	double t = 0;
-	while(t < sec)
+	while(t < sec && ros::ok())
 	{
 
 		gotScan_ = false;		
-		while(!gotScan_)
+		while(!gotScan_ && ros::ok())
 		{
 			ros::spinOnce();
 			ros::Duration(0.05).sleep();
@@ -97,20 +97,12 @@ void Robot_walk::random_walk(double sec)
 		}
 		if (isObstacle_) 
 		{
-			if(rand()/RAND_MAX<0.5)
-			{
-				ROS_INFO("Turning left");
-				cmd_vel_pub_.publish(turnLeftCommand_);
-			}
-			else
-			{
-				ROS_INFO("Turning right");
-				cmd_vel_pub_.publish(turnRightCommand_);
-			}
+			//ROS_INFO("Turning left");
+			cmd_vel_pub_.publish(turnLeftCommand_);
         } 
 		else 
 		{
-			ROS_INFO("Moving forward");
+			//ROS_INFO("Moving forward");
 			cmd_vel_pub_.publish(moveForwardCommand_);
         }
 		r.sleep();
@@ -126,12 +118,13 @@ bool Robot_walk::goal_walk(geometry_msgs::Pose goal)
 	PS.pose = goal;
 	goal_pub_.publish(PS);
 	
+	// BE CAREFUL! BE CONSISTENT w. PLANNER YAML
 	geometry_msgs::Pose curPos = getPose();
 	double x = goal.position.x - curPos.position.x;
 	double y = goal.position.y - curPos.position.y;
 	double z = goal.position.z - curPos.position.z; 
 	double dist = sqrt(x*x + y*y + z*z);
-	if (dist < 0.02)
+	if (dist < 0.1) 
 		return true;
 	else 
 		return false;
@@ -141,7 +134,7 @@ bool Robot_walk::goal_walk(geometry_msgs::Pose goal)
 geometry_msgs::Pose Robot_walk::getPose()
 {
 	gotOdom_ = false;
-	while(!gotOdom_)
+	while(!gotOdom_ && ros::ok())
 	{
 		ros::spinOnce();
 		ros::Duration(0.05).sleep();
