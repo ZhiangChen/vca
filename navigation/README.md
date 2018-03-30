@@ -12,3 +12,12 @@ provides two main methods - random_walk and goal_walk. The node switch_pos switc
 ```bash
 rosrun switch_pos switch_pos
 ```
+
+3. the dynamic window approach - switching positions
+```bash
+roslaunch robots env.launch
+rosrun rviz rviz
+python init_pub.py
+rosrun switch_pos switch_pos
+```
+Open the rviz file "robot_nav.rviz" at /vca/robots/rviz
