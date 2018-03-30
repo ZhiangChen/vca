@@ -1,4 +1,4 @@
-# VCA - Vision-based Collision Avoidance
-Vision-based Collision Avoidance for Multiple Mobile Robots with Decentralized Don-communication.
+# VCA 
+1. The Dynamic Window Approach to Multi-Robot Collision Avoidance
 
 
