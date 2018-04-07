@@ -29,8 +29,8 @@ window
 
 floorplan
 (
-  name "my_map"
-  bitmap "../my_map/my_map.png"
+  name "maze1"
+  bitmap "../maze/maze1.png"
   size [ 24.75 14.85 2.0 ]
   pose [ 12.375 7.425 0.0 0.0 ]
 )

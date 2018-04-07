@@ -1,5 +1,7 @@
 # Navigation
 
+## TurtleBot3 Waffle Gazebo
+
 1. init_pub  
 init_pub initializes the robots' poses to assist amcl localizers.  
 ```bash
@@ -21,3 +23,5 @@ python init_pub.py
 rosrun switch_pos switch_pos
 ```
 Open the rviz file "robot_nav.rviz" at /vca/robots/rviz
+
+## Robot Stage
