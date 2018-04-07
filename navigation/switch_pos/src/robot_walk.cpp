@@ -8,7 +8,7 @@
 
 using namespace std;
 
-Robot_walk::Robot_walk(ros::NodeHandle* nh, string robot_name): nh_(*nh), robot_name_(robot_name)
+Robot_walk::Robot_walk(ros::NodeHandle* nh, string robot_name): nh_(*nh), robot_name_(robot_name), ac_(robot_name+"/move_base",true)
 {
 	vel_topic_ = robot_name_ + "/cmd_vel";
 	scan_topic_ = robot_name_ + "/scan";
@@ -22,6 +22,11 @@ Robot_walk::Robot_walk(ros::NodeHandle* nh, string robot_name): nh_(*nh), robot_
 	cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>(vel_topic_, 1, true);
 	goal_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(goal_topic_, 1, true);
 
+	while(!ac_.waitForServer(ros::Duration(5)))
+	{
+		ROS_WARN("Could not connect to action server. retrying ...");
+	}
+
 	moveForwardCommand_.linear.x = 0.2;
 	turnLeftCommand_.angular.z = 0.4;
 	turnRightCommand_.angular.z = -0.4;
@@ -31,6 +36,8 @@ Robot_walk::Robot_walk(ros::NodeHandle* nh, string robot_name): nh_(*nh), robot_
 
 	ROS_INFO("Robot_walk initialized!");
 }
+
+
 
 void Robot_walk::readOdomCallback(const nav_msgs::Odometry odom)
 {
@@ -113,10 +120,20 @@ void Robot_walk::random_walk(double sec)
 
 bool Robot_walk::goal_walk(geometry_msgs::Pose goal)
 {
-	geometry_msgs::PoseStamped PS;
-	PS.header.frame_id = "map";
-	PS.pose = goal;
-	goal_pub_.publish(PS);
+
+	move_base_msgs::MoveBaseGoal MBGoal;
+	MBGoal.target_pose.header.frame_id = "map";
+	MBGoal.target_pose.header.stamp = ros::Time::now();
+	MBGoal.target_pose.pose = goal;
+	ac_.sendGoal(MBGoal);
+	/*
+	ac_.waitForResult();
+
+	if (ac_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+		ROS_INFO("%s has reached the goal!", robot_name_.c_str());
+	else
+		ROS_INFO("%s failed for some reason", robot_name_.c_str());
+	//*/
 	
 	// BE CAREFUL! BE CONSISTENT w. PLANNER YAML
 	geometry_msgs::Pose curPos = getPose();
@@ -124,7 +141,8 @@ bool Robot_walk::goal_walk(geometry_msgs::Pose goal)
 	double y = goal.position.y - curPos.position.y;
 	double z = goal.position.z - curPos.position.z; 
 	double dist = sqrt(x*x + y*y + z*z);
-	if (dist < 0.1) 
+	cout<<robot_name_<<" to goal: "<<dist<<endl;
+	if (dist < 0.12) 
 		return true;
 	else 
 		return false;

@@ -28,6 +28,10 @@ SOFTWARE.*/
 #include <geometry_msgs/Pose.h>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 using namespace std;
 
@@ -60,6 +64,8 @@ private:
 	ros::Publisher cmd_vel_pub_;
 	ros::Publisher r_scan_pub_;
 	ros::Publisher goal_pub_;
+	MoveBaseClient ac_;
+
 	bool isObstacle_;
 	bool gotScan_;
 	bool gotOdom_;

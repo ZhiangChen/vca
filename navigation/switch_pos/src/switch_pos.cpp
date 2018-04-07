@@ -61,7 +61,7 @@ vector<geometry_msgs::Pose> random_walk(double sec, double dist, Robot_walk* rb0
 		goals[1] = rb1->getPose();
 		curDist = compute_dist(goals[0], goals[1]);
 		cout<<curDist;
-		if (curDist < dist) break;
+		if (curDist > dist) break;
 
 		rb1->random_walk(sec);
 		goals[0] = rb0->getPose();
