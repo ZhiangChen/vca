@@ -1,4 +1,4 @@
-# Turtlebot 3
+## 1. Turtlebot 3 Waffle Gazebo
 
 1. [Turtlebot 3 e-Manual](http://emanual.robotis.com/docs/en/platform/turtlebot3/overview/)
 
@@ -32,3 +32,10 @@ rosrun map_server map_saver -f ~/map
 roslaunch robots env.launch
 ```  
 [ROS namespaces](http://wiki.ros.org/Names) are crucial for multi-agent systems. Also, refer to [good materials by R. Yehoshua](http://u.cs.biu.ac.il/~yehoshr1/89-689/)
+
+## 2. ROS Stage
+1. run Stage simulator  
+```
+rosrun stage_ros stageros $(rospack find robots)/world/stage_sim/simple_world.world  
+rosrun stage_ros stageros [world file]
+```  
