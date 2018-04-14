@@ -23,6 +23,10 @@ class robot:
         self.velocity: absolute robot velocity, list, [v_x, v_y, v_angle]
         self.update: boolean parameter controlling data updating
         """
+        self.update = False
+        self.got_data = False
+        self.obstacle = None
+
         self.name = robot_name
         topic = robot_name + '/base_pose_ground_truth'
         topic1 = robot_name + '/base_scan'
@@ -31,9 +35,7 @@ class robot:
         self.sub1 = rospy.Subscriber(topic1, LaserScan, self.callback1, queue_size=1)
         self.pub = rospy.Publisher(topic_vel, Velocity, queue_size=1)
         # self.pub = rospy.Publisher('lidar', LaserScan, queue_size = 1)
-        self.update = False
-        self.got_data = False
-        self.obstacle = None
+        rospy.loginfo("State Reader %s Initialized" % robot_name)
 
     def callback(self, data):
         if not self.got_data:
@@ -56,6 +58,19 @@ class robot:
             self.obstacle = True
         else:
             self.obstacle = False
+
+    def getState(self):
+        while not self.update:
+            None
+        self.update = False
+        return self.position_, self.angle_, self.velocity
+
+    def getVelocity(self):
+        while not self.update:
+            None
+        self.update = False
+        return self.velocity
+
 
     def _extract(self, data):
         header = data.header
@@ -90,7 +105,7 @@ class stateReader:
 
 
 if __name__ == '__main__':
-    rospy.init_node('state_reader', anonymous=True)
+    rospy.init_node('state_reader', anonymous=False)
     reader = stateReader(4)
     try:
         rospy.spin()

@@ -1,0 +1,6 @@
+# Zhiang Chen, 4/13/2018
+
+uint32 groupID
+float32 time
+---
+bool result

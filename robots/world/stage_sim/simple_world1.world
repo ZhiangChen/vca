@@ -52,3 +52,16 @@ simple_robot # robot1
   color "blue"
 )
 
+simple_robot # robot2
+(
+  pose [ 7.500 5.000 0.000 0.000 ]
+  name "robot_2"
+  color "green"
+)
+
+simple_robot # robot3
+(
+  pose [ 9.000 5.000 0.000 0.000 ]
+  name "robot_3"
+  color "yellow"
+)

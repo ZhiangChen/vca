@@ -9,10 +9,13 @@ Zhiang Chen
 from stateReader import stateReader
 import rospy
 from graph_learning.msg import randomWalkMSG
+from graph_learning.srv import randomWalkSRV
+from graph_learning.srv import randomWalkSRVResponse
 from geometry_msgs.msg import Twist as Velocity
 import random
 import numpy as np
 from math import *
+import time
 
 group = [(0, 1), (2,3)]
 # group_0 has robot_0, robot_1, and robot_0 is the leader;
@@ -20,7 +23,7 @@ group = [(0, 1), (2,3)]
 robot_num = 4
 
 
-class randomWalk:
+class randomWalk(object):
     def __init__(self):
         self.states = stateReader(robot_num)
         self.forward = Velocity()
@@ -30,14 +33,17 @@ class randomWalk:
         self.turn = Velocity()
         self.turn.angular.z = 0.1
         self.stop = Velocity()
-        self.sub = rospy.Subscriber('/random_group', randomWalkMSG, self.callback, queue_size=1)
+        self.service = rospy.Service('/random_group', randomWalkSRV, self.callback)
+        rospy.loginfo("Random Walker Initialized")
+        rospy.sleep(1.0)
 
-    def callback(self, msg):
-        if msg.groupID >= len(group) | msg.groupID < 0:
+    def callback(self, srv):
+        if srv.groupID >= len(group) | (srv.groupID < 0):
             rospy.logerr("Group ID is illegal")
+            randomWalkSRVResponse(False)
         else:
-            t = msg.time
-            leaderID = group[msg.groupID][0]
+            t = srv.time
+            leaderID = group[srv.groupID][0]
             leader = self.states.robots[leaderID]
             step = t/200.0
             sum_t = 0
@@ -56,7 +62,7 @@ class randomWalk:
                         rospy.sleep(step)
             leader.pub.publish(self.stop)
 
-            followersID = group[msg.groupID][1:]
+            followersID = group[srv.groupID][1:]
             followers = [self.states.robots[i] for i in followersID]
             for follower in followers:
                 x = leader.position_.x - follower.position_.x
@@ -87,13 +93,49 @@ class randomWalk:
                         v = np.array([x, y])
                         dist = np.linalg.norm(v)
                 follower.pub.publish(self.stop)
+            return randomWalkSRVResponse(True)
+
+
+    def action(self, group_id, vel):
+        if group_id >= len(group) | (group_id < 0):
+            rospy.logerr("Group ID is illegal")
+            return None
+        else:
+            if len(vel) != len(group[group_id]):
+                rospy.logerr("Velocities cannot match group")
+                return None
+            else:
+                #t1 = time.time()
+                leaderID = group[group_id][0]
+                leader = self.states.robots[leaderID]
+                followersID = group[group_id][1:]
+                followers = [self.states.robots[i] for i in followersID]
+                vel = [self.converter(v) for v in vel]
+                #print time.time() - t1
+                #t2 = time.time()
+                for _ in range(10):
+                    leader.pub.publish(vel[0])
+                    #print leader.getVelocity()
+                    """print consumes a lot of time"""
+                    for i,follower in enumerate(followers):
+                        follower.pub.publish(vel[i+1])
+                        #print follower.getVelocity()
+                    time.sleep(0.01) # time.sleep is better than rospy.sleep
+                #print time.time() - t2
+
+
+    def converter(self, v):
+        vel = Velocity()
+        vel.linear.x = v[0]
+        vel.angular.z = v[1]
+        return vel
 
 
 
 
 
 if __name__ == '__main__':
-    rospy.init_node('random_walk', anonymous=True)
+    rospy.init_node('random_walk', anonymous=False)
     walker = randomWalk()
     try:
         rospy.spin()
