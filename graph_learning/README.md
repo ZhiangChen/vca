@@ -13,3 +13,13 @@ roscore
 rosrun stage_ros stageros $(rospack find robots)/world/stage_sim/simple_world.world  
 python env.py -r
 ```
+
+### Reinforcement Learning
+1. DDPG -- [Continuous control with deep reinforcement learning](https://arxiv.org/abs/1509.02971)  
+Reward Functions:  
+(1) relation constraint in a group: 
+<img src="img/rewardFnc1.png" width="500"/>  
+
+(2) reward from reaching a goal.  
+(3) progressive reward: this is only used to initiate weights during training. r = (dist2goal - dist2goal')/dist2goal  
+(4) collision reward from any robots and walls.
