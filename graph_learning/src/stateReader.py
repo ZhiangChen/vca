@@ -63,7 +63,7 @@ class robot:
         while not self.update:
             None
         self.update = False
-        return self.position_, self.angle_, self.velocity
+        return (self.position_.x, self.position_.y, self.angle_), self.velocity
 
     def getVelocity(self):
         while not self.update:
@@ -85,7 +85,7 @@ class robot:
         vx = (self.position_.x - self.position.x) / time
         vy = (self.position_.y - self.position.y) / time
         va = (self.angle_ - self.angle) / time
-        return [vx, vy, va]
+        return vx, vy, va
 
 
 class stateReader:

@@ -20,11 +20,9 @@ import time
 group = [(0, 1), (2,3)]
 # group_0 has robot_0, robot_1, and robot_0 is the leader;
 # group_1 has robot_2, robot3, and robot_2 is the leader
-robot_num = 4
-
 
 class randomWalk(object):
-    def __init__(self):
+    def __init__(self, robot_num=4):
         self.states = stateReader(robot_num)
         self.forward = Velocity()
         self.forward.linear.x = 0.2
@@ -97,6 +95,11 @@ class randomWalk(object):
 
 
     def action(self, group_id, vel):
+        """
+        :param group_id: group_id
+        :param vel: velocities of all robots in the group
+        :return: None if error occurs
+        """
         if group_id >= len(group) | (group_id < 0):
             rospy.logerr("Group ID is illegal")
             return None
@@ -110,7 +113,7 @@ class randomWalk(object):
                 leader = self.states.robots[leaderID]
                 followersID = group[group_id][1:]
                 followers = [self.states.robots[i] for i in followersID]
-                vel = [self.converter(v) for v in vel]
+                vel = [self._converter(v) for v in vel]
                 #print time.time() - t1
                 #t2 = time.time()
                 for _ in range(10):
@@ -123,8 +126,15 @@ class randomWalk(object):
                     time.sleep(0.01) # time.sleep is better than rospy.sleep
                 #print time.time() - t2
 
+    def getState(self):
+        """
+        getState is mainly limited to the frequency of state publishers. The reader process is actually very fast.
+        :return:
+        """
+        return tuple([robot.getState() for robot in self.states.robots])
 
-    def converter(self, v):
+
+    def _converter(self, v):
         vel = Velocity()
         vel.linear.x = v[0]
         vel.angular.z = v[1]
