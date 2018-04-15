@@ -15,7 +15,9 @@ python env.py -r
 ```
 
 ### Reinforcement Learning
-1. DDPG -- [Continuous control with deep reinforcement learning](https://arxiv.org/abs/1509.02971)  
+1. Models  
+- DDPG -- [Continuous control with deep reinforcement learning](https://arxiv.org/abs/1509.02971)  
+- NAF -- [Continuous Deep Q-Learning with Model-based Acceleration](https://arxiv.org/abs/1603.00748)  
 
 2. Reward Functions:  
 (1) relation constraint in a group: 
