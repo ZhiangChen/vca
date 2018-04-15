@@ -17,7 +17,7 @@ env_id = 0
 # 1: four mobile robots
 robot_num = 2
 
-DIST = 1.5
+DIST = 1.5 # the distance between two robots
 # this distance should be consistant with the distance in randomWalk.callback
 
 class Env(randomWalk):
@@ -42,10 +42,10 @@ class Env(randomWalk):
             if sys.argv[1] == '-t1':
                 self.step(vel=((0.2,0.2),(0.1,0)), goal=((0.5,0.5),(0.5,0.5)))
                 state1 = self.getState()
-                for _ in range(5):
+                for _ in range(70):
                     self.action(group_id=0, vel=((0.2, 0.2), (0.1, 0)))
                 state2 = self.getState()
-                print self._rewardFnc2(self._center(state1),self._center(state2))
+                print self._rewardFnc5(state1,state2)
 
     def reset(self):
         if self.env_id == 0:
@@ -89,6 +89,7 @@ class Env(randomWalk):
         elif self.env_id == 1:
             pass
 
+
     def calcReward(self, state, goal):
         """
         :param state: states of robots in ONE group, tuple
@@ -99,7 +100,6 @@ class Env(randomWalk):
             pass
         elif self.env_id == 1:
             pass
-
 
 
     def _rewardFnc1(self, state):
@@ -125,16 +125,44 @@ class Env(randomWalk):
             return 0.0
 
 
-    def _rewardFnc3(self, c1, c2):
+    def _rewardFnc3(self, state1, state2, goal):
         """
         this aims at the progress state
-        :param c1: current center, numpy.array
-        :param c2: goal center, numpy.array
+        :param state1: old state of a group, tuple
+        :param state2: new state of the group, tuple
+        :param goal: goal center, numpy.array
         :return: reward, float
         """
+        dist = self._dist_group2goal(state1, goal)
+        dist_ = self._dist_group2goal(state2, goal)
+        return (dist - dist_)/dist_
 
 
+    def _rewardFnc4(self, state):
+        """
+        collision reward from hitting walls
+        :param state:
+        :return: rewards of all robots, boolean tuple
+        """
+        state = [s[0][:2] for s in state]
+        return tuple([(0.5<s[0]<9.3) & (0.5<s[1]<9.3) for s in state])
 
+
+    def _rewardFnc5(self, state1, state2):
+        """
+        collision reward from robots in two groups
+        :param state1: state of group1, tuple
+        :param state2: state of group2, tuple
+        :return: reward, float
+        """
+        state1 = np.array(state1)[:,0,:2]
+        state2 = np.array(state2)[:,0,:2]
+        for s in state1:
+            dist = np.linalg.norm(s - state2, axis=1)
+            print dist
+            if np.any(dist<0.75):
+                return -1.0
+        return 0.0
 
 
     def _center(self, state):
@@ -164,6 +192,15 @@ class Env(randomWalk):
         c1 = self._center(state1)
         c2 = self._center(state2)
         return np.linalg.norm(c1 - c2)
+
+    def _dist_group2goal(self, state, goal):
+        """
+        distance between state center and goal
+        :param state: state of a group, tuple
+        :param goal: goal center, numpy.array
+        :return: distance, float
+        """
+        return np.linalg.norm(goal - self._center(state))
 
 
 
