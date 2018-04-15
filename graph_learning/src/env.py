@@ -40,12 +40,9 @@ class Env(randomWalk):
                     print '\n'
 
             if sys.argv[1] == '-t1':
-                self.step(vel=((0.2,0.2),(0.1,0)), goal=((0.5,0.5),(0.5,0.5)))
-                state1 = self.getState()
-                for _ in range(70):
-                    self.action(group_id=0, vel=((0.2, 0.2), (0.1, 0)))
-                state2 = self.getState()
-                print self._rewardFnc5(state1,state2)
+                for _ in range(20):
+                    update = self.step(vel=((0.2, 0.2), (0.1, 0)), goal=((0.5, 0.5), (0.5, 0.5)))
+                print update
 
     def reset(self):
         if self.env_id == 0:
@@ -81,23 +78,35 @@ class Env(randomWalk):
         :return: updated states, tuple; rewards for all robots, tuple; termination status, bool.
         """
         if self.env_id == 0:
-            self.action(group_id=0, vel=vel)
             state = self.getState()
-            rewards = self.calcReward(state, goal)
-
+            self.action(group_id=0, vel=vel)
+            state_ = self.getState()
+            reward, done = self.calcReward(state, state_, ((0.5,0.5),(0.5,0.5)))
+            return state_, reward, done
 
         elif self.env_id == 1:
             pass
 
 
-    def calcReward(self, state, goal):
+    def calcReward(self, state, state_, goal):
         """
         :param state: states of robots in ONE group, tuple
         :param goal: goals of robots in ONE group, tuple
-        :return: rewards for all the robots, tuple; termination status, bool;
+        :return: rewards for all the robots, tuple;
         """
         if self.env_id == 0:
-            pass
+            r = self._rewardFnc1(state_)  # relation reward
+            reward = np.array((r, r))
+            r = self._rewardFnc2(self._center(state_), goal[0])  # goal reward
+            if r == 1.0:
+                done = True
+            else:
+                done = False
+            reward += r
+            reward += self._rewardFnc3(state, state_, goal[0])  # progress reward
+            reward += np.array(self._rewardFnc4(state))  # collision wall reward
+            return reward, done
+
         elif self.env_id == 1:
             pass
 
@@ -145,12 +154,12 @@ class Env(randomWalk):
         :return: rewards of all robots, boolean tuple
         """
         state = [s[0][:2] for s in state]
-        return tuple([(0.5<s[0]<9.3) & (0.5<s[1]<9.3) for s in state])
+        return tuple([float((0.5<s[0]<9.3) & (0.5<s[1]<9.3))-1 for s in state])
 
 
     def _rewardFnc5(self, state1, state2):
         """
-        collision reward from robots in two groups
+        collision reward from robots among two groups
         :param state1: state of group1, tuple
         :param state2: state of group2, tuple
         :return: reward, float
@@ -159,7 +168,6 @@ class Env(randomWalk):
         state2 = np.array(state2)[:,0,:2]
         for s in state1:
             dist = np.linalg.norm(s - state2, axis=1)
-            print dist
             if np.any(dist<0.75):
                 return -1.0
         return 0.0
@@ -201,8 +209,6 @@ class Env(randomWalk):
         :return: distance, float
         """
         return np.linalg.norm(goal - self._center(state))
-
-
 
 
 
