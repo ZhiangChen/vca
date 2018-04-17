@@ -26,3 +26,17 @@ python env.py -r
 (2) reward from reaching a goal.  
 (3) progressive reward: this is only used to initiate weights during training. r = (dist2goal - dist2goal')/dist2goal  
 (4) collision reward from any robots and walls.
+
+### Neural Networks
+1. MLPs - vca/graph_learning/src/fc.py
+- fc.FC2Layers
+- fc.FC2LayersShortcut  
+
+2. ResNet - vca/graph_learning/src/resnet.py
+- resnet.ResNet18
+- resnet.ResNet34
+- resnet.Resnet50
+
+3. Actor-Critic - vca/graph_learning/src/rl  
+
+4. Relation Network
