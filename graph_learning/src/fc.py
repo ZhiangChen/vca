@@ -39,8 +39,15 @@ class FC2LayersShortcut(nn.Module):
         return x
 
 
-"""
-net = Net()
-i = Variable(torch.randn(3,2))
-print(net(i))
-#"""
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.mlp = FC2LayersShortcut(12,16,32)
+
+    def forward(self, x):
+        return self.mlp(x)
+
+if __name__ == '__main__':
+    net = Net()
+    i = Variable(torch.randn(4,12))
+    print(net(i))
