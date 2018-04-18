@@ -8,7 +8,6 @@ Zhiang Chen
 
 from stateReader import stateReader
 import rospy
-from graph_learning.msg import randomWalkMSG
 from graph_learning.srv import randomWalkSRV
 from graph_learning.srv import randomWalkSRVResponse
 from geometry_msgs.msg import Twist as Velocity
@@ -17,12 +16,14 @@ import numpy as np
 from math import *
 import time
 
+"""PARAMETERS TO TUNE"""
 group = [(0, 1), (2,3)]
 # group_0 has robot_0, robot_1, and robot_0 is the leader;
 # group_1 has robot_2, robot3, and robot_2 is the leader
 
 class randomWalk(object):
-    def __init__(self, robot_num=4):
+    def __init__(self, robot_num=4, dist = 1.5):
+        self._dist_between_robots = dist
         self.states = stateReader(robot_num)
         self.forward = Velocity()
         self.forward.linear.x = 0.2
@@ -76,14 +77,14 @@ class randomWalk(object):
                     follower.pub.publish(self.turn)
                 follower.pub.publish(self.stop)
 
-                while dist > 1.52:
+                while dist > (self._dist_between_robots + 0.02):
                     follower.pub.publish(self.forward)
                     x = leader.position_.x - follower.position_.x
                     y = leader.position_.y - follower.position_.y
                     v = np.array([x, y])
                     dist = np.linalg.norm(v)
                     print dist
-                    while dist < 1.48:
+                    while dist < (self._dist_between_robots - 0.02):
                         follower.pub.publish(self.backward)
                         follower.pub.publish(self.forward)
                         x = leader.position_.x - follower.position_.x

@@ -12,18 +12,14 @@ import rospy
 import sys
 import numpy as np
 
-"""PAPAMETERS TO TUNE"""
-env_id = 0
-# 0: two mobile robots
-# 1: four mobile robots
-robot_num = 2
-
-DIST = 1.5 # the distance between two robots
-# this distance should be consistant with the distance in randomWalk.callback
-
 class Env(randomWalk):
-    def __init__(self, env_id, robot_num=4):
-        super(Env, self).__init__(robot_num)
+    def __init__(self, env_id, robot_num=4, inner_dist = 1.5):
+        """
+        :param env_id: 0 - two mobile robots; 1 - four mobile robots
+        :param robot_num: the number of robots
+        :param inner_dist: the distance that two robots should keep in a group
+        """
+        super(Env, self).__init__(robot_num, inner_dist)
         self.env_id = env_id
         #self.pub = rospy.Publisher('/random_group', randomWalkSRV, queue_size=1)
         rospy.wait_for_service('/random_group', timeout=5.0)
@@ -50,7 +46,7 @@ class Env(randomWalk):
 
             try:
                 self.clinet = rospy.ServiceProxy('/random_group', randomWalkSRV)
-                if self.clinet(group_id=0, time=5):
+                if self.clinet(groupID=0, time=5):
                     return self.states.robots
             except rospy.ServiceException, e:
                 print "Service call failed: %s" % e
@@ -59,14 +55,14 @@ class Env(randomWalk):
         elif self.env_id == 1:
             try:
                 self.clinet = rospy.ServiceProxy('/random_group', randomWalkSRV)
-                self.clinet(group_id=0, time=5)
+                self.clinet(groupID=0, time=5)
             except rospy.ServiceException, e:
                 print "Service call failed: %s" % e
                 return None
 
             try:
                 self.clinet = rospy.ServiceProxy('/random_group', randomWalkSRV)
-                return self.clinet(group_id=1, time=5)
+                return self.clinet(groupID=1, time=5)
             except rospy.ServiceException, e:
                 print "Service call failed: %s" % e
                 return None
@@ -118,7 +114,7 @@ class Env(randomWalk):
         :param state: state of a group, tuple
         :return: reward, float
         """
-        d = -abs(self._dist_in_group(state) - DIST)
+        d = -abs(self._dist_in_group(state) - self._dist_between_robots)
         return min(0, 100**d-1)
 
 
@@ -216,7 +212,7 @@ class Env(randomWalk):
 
 if __name__ == '__main__':
     rospy.init_node('env', anonymous=False)
-    env = Env(env_id, robot_num)
+    env = Env(env_id=0, robot_num=2)
     try:
         rospy.spin()
     except KeyboardInterrupt:

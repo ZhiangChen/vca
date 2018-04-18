@@ -24,7 +24,7 @@ from rl.replay_memory import ReplayMemory, Transition
 # state of a robot (x, y, alpha, v_x, v_y)
 # one-hot coding relation (1,0), (0,1)
 
-"""PAPAMETERS TO TUNE"""
+"""PARAMETERS TO TUNE"""
 # FC2LayersShortcut architecture
 # ResNet architecture
 # activation function of MLPs output
@@ -37,20 +37,20 @@ fc_param = (n_in, n_hidden, n_out)
 
 
 class relationNet(nn.Module):
-    def __init__(self, fc_param):
+    def __init__(self, fc_param):  # constructor parameter is a list
         super(relationNet, self).__init__()
         self.fc_param = fc_param
         self.mlp = FC2LayersShortcut(*fc_param)
         self.res = ResNet18()
         self.naf = Policy(hidden_size=128, num_inputs=17, action_space=2)
 
-    def forward(self, e, s, g, u):
+    def forward(self, (e, s, g), u):
         """
         :param e: edge, shape=(batch_num, edge_num, edg_dim)
         :param s: state of a robot (x, y, alpha, v_x, v_y)
         :param g: goal (x, y)
         :param u: velocity control (v_x, v_y)
-        :return: see naf.py
+        :return: mu, Q, V, see naf.py
         """
         n = e.size()[-2]  # number of edges received by one robot
         e = e.view(-1,fc_param[0])
@@ -67,9 +67,15 @@ class relationNet(nn.Module):
 if __name__ == '__main__':
     torch.manual_seed(0)
     net = relationNet(fc_param)
+    net.eval()
+    e = Variable(torch.randn(4, 2, 12), volatile=True)
+    s = Variable(torch.randn(4, 5), volatile=True)
+    g = Variable(torch.randn(4, 2), volatile=True)
+    u = Variable(torch.randn(4, 2), volatile=True)
+    print net((e, s, g), u)
+    net.train()
     e = Variable(torch.randn(3, 4, 12), volatile=True)
-    s = Variable(torch.randn(3,5), volatile=True)
-    g = Variable(torch.randn(3,2), volatile=True)
-    u = Variable(torch.randn(3,2), volatile=True)
-    print net(e, s, g, u)
-    print net(e, s, g, None)
+    s = Variable(torch.randn(3, 5), volatile=True)
+    g = Variable(torch.randn(3, 2), volatile=True)
+    u = Variable(torch.randn(3, 2), volatile=True)
+    print net((e, s, g), None)
