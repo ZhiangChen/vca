@@ -12,6 +12,7 @@ import rospy
 import sys
 import numpy as np
 
+"""PAPAMETERS TO TUNE"""
 env_id = 0
 # 0: two mobile robots
 # 1: four mobile robots

@@ -14,6 +14,11 @@ import torch.nn.functional as F
 
 from fc import *
 from resnet import *
+from rl.ddpg import DDPG
+from rl.naf import Policy
+from rl.normalized_actions import NormalizedActions
+from rl.ounoise import OUNoise
+from rl.replay_memory import ReplayMemory, Transition
 
 
 # state of a robot (x, y, alpha, v_x, v_y)
@@ -24,27 +29,47 @@ from resnet import *
 # ResNet architecture
 # activation function of MLPs output
 # input of relationNet
+# input of NAF (relation effect, state, goal), dim = 10 + 5 + 2
+n_in = 12
+n_hidden = 16
+n_out = 32
+fc_param = (n_in, n_hidden, n_out)
+
 
 class relationNet(nn.Module):
-    def __init__(self):
+    def __init__(self, fc_param):
         super(relationNet, self).__init__()
-        self.mlp = FC2LayersShortcut(12, 16, 32)
+        self.fc_param = fc_param
+        self.mlp = FC2LayersShortcut(*fc_param)
         self.res = ResNet18()
+        self.naf = Policy(hidden_size=128, num_inputs=17, action_space=2)
 
-    def forward(self, x):
+    def forward(self, e, s, g, u):
         """
-        :param x: Variable, [num_edge, edge_dim]
-        :return:
+        :param e: edge, shape=(batch_num, edge_num, edg_dim)
+        :param s: state of a robot (x, y, alpha, v_x, v_y)
+        :param g: goal (x, y)
+        :param u: velocity control (v_x, v_y)
+        :return: see naf.py
         """
-        h = self.mlp(x)
+        n = e.size()[-2]  # number of edges received by one robot
+        e = e.view(-1,fc_param[0])
+        h = self.mlp(e)
         h = F.selu(h)
-        out_prd = torch.bmm(h.unsqueeze(2), h.unsqueeze(1)) # outer product
-        r_map = torch.sum(out_prd, -3) # relation map
+        out_prd = torch.bmm(h.unsqueeze(2), h.unsqueeze(1))  # outer product
+        out_prd = out_prd.view(-1, n, 32, 32)  # reshape back to batch
+        r_map = torch.sum(out_prd, -3)  # relation map
         relation = self.res(r_map.view(-1, 1, 32, 32))
-        return relation
+        i = torch.cat((relation, s, g), 1)
+        return self.naf((i,u))
+
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-    net = relationNet()
-    i = Variable(torch.randn(4, 12))
-    print net(i)
+    net = relationNet(fc_param)
+    e = Variable(torch.randn(3, 4, 12), volatile=True)
+    s = Variable(torch.randn(3,5), volatile=True)
+    g = Variable(torch.randn(3,2), volatile=True)
+    u = Variable(torch.randn(3,2), volatile=True)
+    print net(e, s, g, u)
+    print net(e, s, g, None)
