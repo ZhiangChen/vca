@@ -35,17 +35,21 @@ def hard_update(target, source):
 # activation function of MLPs output
 # input of relationNet
 # input of NAF (relation effect, state, goal), dim = 10 + 5 + 2
-n_in = 12
+n_in = 3
 n_hidden = 16
 n_out = 32
 fc_param = (n_in, n_hidden, n_out)
 
+hidden_size = 128
+num_inputs = 17
+action_space = 2
+rl_param = (hidden_size, num_inputs, action_space)
 
 class RLAgent(object):
-    def __init__(self, gamma, tau, fc_param):
+    def __init__(self, gamma, tau, fc_param, rl_param = (128, 17, 2)):
         """ relationNet returns mu, Q, V """
-        self.model = relationNet(fc_param)
-        self.target_model = relationNet(fc_param)
+        self.model = relationNet(fc_param, rl_param)
+        self.target_model = relationNet(fc_param, rl_param)
 
         self.optimizer = Adam(self.model.parameters(), lr=1e-3)
         self.gamma = gamma
@@ -65,10 +69,12 @@ class RLAgent(object):
         return mu.clamp(-1, 1)
 
     def update_parameters(self, batch):
+        #print batch.state
         state_batch = tuple([Variable(s) for s in batch.state])
         next_state_batch = tuple([Variable(s, volatile=True) for s in batch.next_state])
         action_batch = Variable(batch.action)
         reward_batch = Variable(batch.reward)
+
 
         _, _, next_state_values = self.target_model(next_state_batch, None)
 
@@ -106,8 +112,8 @@ args = parser.parse_args()
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-    agent = RLAgent(args.gamma, args.tau, fc_param)
-    e = torch.randn(4,12)
+    agent = RLAgent(args.gamma, args.tau, fc_param, rl_param)
+    e = torch.randn(4,n_in)
     s = torch.randn(1,5)
     g = torch.randn(1,2)
     print "select action: "
@@ -115,10 +121,10 @@ if __name__ == '__main__':
 
     class batch:
         def __init__(self):
-            e = torch.randn(2, 4, 12)
+            e = torch.randn(2, 4, n_in)
             s = torch.randn(2, 5)
             g = torch.randn(2, 2)
-            a = torch.randn(2, 2)
+            a = torch.randn(2, action_space)
             r = torch.randn(2, 1)
             self.state = (e,s,g)
             self.next_state = (e,s,g)
@@ -130,7 +136,7 @@ if __name__ == '__main__':
 
     agent.save_model()
 
-    agent2 = RLAgent(args.gamma, args.tau, fc_param)
+    agent2 = RLAgent(args.gamma, args.tau, fc_param, rl_param)
     agent2.load_model()
 
 

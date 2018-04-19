@@ -30,19 +30,23 @@ from rl.replay_memory import ReplayMemory, Transition
 # activation function of MLPs output
 # input of relationNet
 # input of NAF (relation effect, state, goal), dim = 10 + 5 + 2
-n_in = 12
+n_in = 10
 n_hidden = 16
 n_out = 32
 fc_param = (n_in, n_hidden, n_out)
 
+hidden_size = 128
+num_inputs = 17
+action_space = 2
+rl_param = (hidden_size, num_inputs, action_space)
 
 class relationNet(nn.Module):
-    def __init__(self, fc_param):  # constructor parameter is a list
+    def __init__(self, fc_param, rl_param = (128, 17, 2)):  # constructor parameter is a list
         super(relationNet, self).__init__()
         self.fc_param = fc_param
         self.mlp = FC2LayersShortcut(*fc_param)
         self.res = ResNet18()
-        self.naf = Policy(hidden_size=128, num_inputs=17, action_space=2)
+        self.naf = Policy(*rl_param)
 
     def forward(self, (e, s, g), u):
         """
@@ -53,7 +57,7 @@ class relationNet(nn.Module):
         :return: mu, Q, V, see naf.py
         """
         n = e.size()[-2]  # number of edges received by one robot
-        e = e.view(-1,fc_param[0])
+        e = e.view(-1,self.fc_param[0])
         h = self.mlp(e)
         h = F.selu(h)
         out_prd = torch.bmm(h.unsqueeze(2), h.unsqueeze(1))  # outer product
@@ -66,15 +70,15 @@ class relationNet(nn.Module):
 
 if __name__ == '__main__':
     torch.manual_seed(0)
-    net = relationNet(fc_param)
+    net = relationNet(fc_param, rl_param)
     net.eval()
-    e = Variable(torch.randn(4, 2, 12), volatile=True)
+    e = Variable(torch.randn(4, 2, n_in), volatile=True)
     s = Variable(torch.randn(4, 5), volatile=True)
     g = Variable(torch.randn(4, 2), volatile=True)
     u = Variable(torch.randn(4, 2), volatile=True)
     print net((e, s, g), u)
     net.train()
-    e = Variable(torch.randn(3, 4, 12), volatile=True)
+    e = Variable(torch.randn(3, 4, n_in), volatile=True)
     s = Variable(torch.randn(3, 5), volatile=True)
     g = Variable(torch.randn(3, 2), volatile=True)
     u = Variable(torch.randn(3, 2), volatile=True)
