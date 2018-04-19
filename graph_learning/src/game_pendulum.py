@@ -20,6 +20,7 @@ from rl.replay_memory import ReplayMemory, Transition
 import argparse
 import torch
 import numpy as np
+import time
 
 class Batch(object):
     def __init__(self, batch):
@@ -59,7 +60,10 @@ class penDulum(object):
     def train(self, n_eps):
         rewards = []
         for i_episode in range(n_eps):
+            tm = time.time()
             if i_episode < n_eps // 2:
+                print time.time()-tm
+                tm= time.time()
                 e = torch.Tensor([self.env.reset()])
                 self.ounoise.scale = (args.noise_scale - args.final_noise_scale) * max(0, args.exploration_end -
                                                                                   i_episode) / args.exploration_end + args.final_noise_scale
@@ -154,4 +158,4 @@ args = parser.parse_args()
 if __name__ == '__main__':
     torch.manual_seed(0)
     game = penDulum(args.gamma, args.tau, args.replay_size)
-    game.train(500)
+    #game.train(500)
