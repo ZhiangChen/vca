@@ -106,6 +106,11 @@ class Env(randomWalk):
             reward += r
             reward += self._rewardFnc3(state, state_, goal[0])  # progress reward
             reward += np.array(self._rewardFnc4(state))  # collision wall reward
+
+            cls = [robot.collision for robot in self.states.robots]
+            if any(cls):
+                rospy.logerr("collision")
+                done = True
             return reward, done
 
         elif self.env_id == 1:

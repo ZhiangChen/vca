@@ -41,9 +41,9 @@ exploration_end = 100
 final_noise_scale = 0.3
 noise_scale = 0.3
 
-batch_size = 128
+batch_size = 64
 updates_per_eps = 10
-n_steps = 100
+n_steps = 200
 replay_size = 1000000
 
 class flocking(object):
@@ -60,10 +60,10 @@ class flocking(object):
 
         self.agent = RLAgent(gamma, tau, fc_param, rl_param)
 
-        #self.memory.load()
+        self.memory.load()
         #self.agent.load_model(load_target=True)
-        self.train_0(1)
-        #self.agent.save_model(save_target=True)
+        self.train_0(100)
+        self.agent.save_model(save_target=True)
 
     def train_0(self, n_eps):
         rewards = []
@@ -87,6 +87,7 @@ class flocking(object):
             self.ounoise.scale = (noise_scale - final_noise_scale) * max(0, exploration_end - i_episode) / exploration_end + final_noise_scale
             self.ounoise.reset()
             episode_reward = 0
+            n_batch = updates_per_eps
 
 
             for i_step in range(n_steps):
@@ -122,7 +123,9 @@ class flocking(object):
 
             self.memory.save()
 
-            if len(self.memory) > batch_size * updates_per_eps:
+            if len(self.memory) > batch_size * n_batch:
+                n_batch += 4
+                print "learning..."
                 for _ in range(updates_per_eps):
                     batch = self.memory.sample(batch_size)
                     self.agent.update_parameters(batch)
@@ -132,14 +135,9 @@ class flocking(object):
                   "average return: {}".format(i_episode, self.ounoise.scale,
                                               rewards[-1], np.mean(rewards[0][-100:])))
 
+            print "random walking"
             self.env.reset()
-
-
-
-
-
-
-
+            print '\n'
 
 
 if __name__ == '__main__':

@@ -60,7 +60,7 @@ class robot:
         else:
             self.obstacle = False
 
-        if min(scans) < 0.7:
+        if min(data.ranges) < 0.5:
             self.collision = True
         else:
             self.collision = False

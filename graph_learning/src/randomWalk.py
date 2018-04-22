@@ -118,13 +118,11 @@ class randomWalk(object):
                 #print time.time() - t1
                 #t2 = time.time()
                 for _ in range(10):
-                    if not leader.collision:
-                        leader.pub.publish(vel[0])
+                    leader.pub.publish(vel[0])
                     #print leader.getVelocity()
                     """print consumes a lot of time"""
                     for i,follower in enumerate(followers):
-                        if not follower.collision:
-                            follower.pub.publish(vel[i+1])
+                        follower.pub.publish(vel[i+1])
                         #print follower.getVelocity()
                     time.sleep(0.01) # time.sleep is better than rospy.sleep
                 #print time.time() - t2
