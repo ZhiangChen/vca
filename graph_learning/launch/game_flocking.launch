@@ -1,0 +1,3 @@
+<launch>
+<node pkg="stage_ros" type="stageros" name="stageros" args="$(find robots)/world/stage_sim/simple_world.world"/>
+</launch>

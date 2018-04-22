@@ -83,7 +83,7 @@ class randomWalk(object):
                     y = leader.position_.y - follower.position_.y
                     v = np.array([x, y])
                     dist = np.linalg.norm(v)
-                    print dist
+                    #print dist
                     while dist < (self._dist_between_robots - 0.02):
                         follower.pub.publish(self.backward)
                         follower.pub.publish(self.forward)
@@ -118,11 +118,13 @@ class randomWalk(object):
                 #print time.time() - t1
                 #t2 = time.time()
                 for _ in range(10):
-                    leader.pub.publish(vel[0])
+                    if not leader.collision:
+                        leader.pub.publish(vel[0])
                     #print leader.getVelocity()
                     """print consumes a lot of time"""
                     for i,follower in enumerate(followers):
-                        follower.pub.publish(vel[i+1])
+                        if not follower.collision:
+                            follower.pub.publish(vel[i+1])
                         #print follower.getVelocity()
                     time.sleep(0.01) # time.sleep is better than rospy.sleep
                 #print time.time() - t2

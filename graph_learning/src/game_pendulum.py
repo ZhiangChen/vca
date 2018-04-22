@@ -22,23 +22,7 @@ import torch
 import numpy as np
 import time
 
-class Batch(object):
-    def __init__(self, batch):
-        E = torch.cat([s[0] for s in batch.state], 0)
-        S = torch.cat([s[1] for s in batch.state], 0)
-        G = torch.cat([s[2] for s in batch.state], 0)
-        E = E.unsqueeze(1)
-        self.state = (E,S,G)
 
-        E = torch.cat(batch.next_state, 0)
-        E = E.unsqueeze(1)
-        self.next_state = (E,S,G)
-
-        self.action = torch.cat(batch.action, 0)
-
-        self.reward = torch.cat(batch.reward, 0).unsqueeze(1)
-
-        self.mask = torch.cat(batch.mask, 0).unsqueeze(1)
 
 
 class penDulum(object):
@@ -59,8 +43,8 @@ class penDulum(object):
 
     def train(self, n_eps):
         rewards = []
+        tm = time.time()
         for i_episode in range(n_eps):
-            tm = time.time()
             if i_episode < n_eps // 2:
                 print time.time()-tm
                 tm= time.time()
@@ -75,7 +59,7 @@ class penDulum(object):
                     action = self.agent.select_action(e, s, g, self.ounoise)
                     next_state, reward, done, _ = self.env.step(action.numpy()[0])
                     episode_reward += reward
-
+                    print time.time()-tm  # implementation time is not bad
                     action = torch.Tensor(action)
                     mask = torch.Tensor([not done])
                     next_state = torch.Tensor([next_state])
@@ -88,7 +72,7 @@ class penDulum(object):
 
                     e = next_state
 
-                    if len(self.memory) > args.batch_size * 5:
+                    if len(self.memory) > 128 * 5:
                         for _ in range(args.updates_per_step):
                             transitions = self.memory.sample(args.batch_size)
                             batch = Transition(*zip(*transitions))
@@ -122,6 +106,7 @@ class penDulum(object):
 
                 rewards.append(episode_reward)
             print("Episode: {}, noise: {}, reward: {}, average reward: {}".format(i_episode, self.ounoise.scale, rewards[-1], np.mean(rewards[-100:])))
+
 
 """ Hyperparameters """
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE example')
@@ -158,4 +143,4 @@ args = parser.parse_args()
 if __name__ == '__main__':
     torch.manual_seed(0)
     game = penDulum(args.gamma, args.tau, args.replay_size)
-    #game.train(500)
+    game.train(500)

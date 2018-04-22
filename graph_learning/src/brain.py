@@ -41,12 +41,12 @@ n_out = 32
 fc_param = (n_in, n_hidden, n_out)
 
 hidden_size = 128
-num_inputs = 17
+num_inputs = 18
 action_space = 2
 rl_param = (hidden_size, num_inputs, action_space)
 
 class RLAgent(object):
-    def __init__(self, gamma, tau, fc_param, rl_param = (128, 17, 2)):
+    def __init__(self, gamma, tau, fc_param, rl_param = (128, 18, 2)):
         """ relationNet returns mu, Q, V """
         self.model = relationNet(fc_param, rl_param)
         self.target_model = relationNet(fc_param, rl_param)
@@ -92,11 +92,13 @@ class RLAgent(object):
         soft_update(self.target_model, self.model, self.tau)
 
     def save_model(self, file="model", path="./trained_models/", save_target=False):
+        print "saving model..."
         torch.save(self.model.state_dict(), path+file)
         if save_target:
             torch.save(self.target_model.state_dict(), path+file+"_target")
 
     def load_model(self, file="model", path="./trained_models/", load_target=False):
+        print "loading model..."
         self.model.load_state_dict(torch.load(path+file))
         if load_target:
             self.target_model.load_state_dict(torch.load(path+file+"_target"))

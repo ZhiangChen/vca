@@ -26,6 +26,7 @@ class robot:
         self.update = False
         self.got_data = False
         self.obstacle = None
+        self.collision = False
 
         self.name = robot_name
         topic = robot_name + '/base_pose_ground_truth'
@@ -58,6 +59,11 @@ class robot:
             self.obstacle = True
         else:
             self.obstacle = False
+
+        if min(scans) < 0.7:
+            self.collision = True
+        else:
+            self.collision = False
 
     def getState(self):
         while not self.update:

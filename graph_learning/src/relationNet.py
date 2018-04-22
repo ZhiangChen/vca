@@ -29,19 +29,19 @@ from rl.replay_memory import ReplayMemory, Transition
 # ResNet architecture
 # activation function of MLPs output
 # input of relationNet
-# input of NAF (relation effect, state, goal), dim = 10 + 5 + 2
-n_in = 10
+# input of NAF (relation effect, state, goal), dim = 10 + 6 + 2
+n_in = 14
 n_hidden = 16
 n_out = 32
 fc_param = (n_in, n_hidden, n_out)
 
 hidden_size = 128
-num_inputs = 17
+num_inputs = 18
 action_space = 2
 rl_param = (hidden_size, num_inputs, action_space)
 
 class relationNet(nn.Module):
-    def __init__(self, fc_param, rl_param = (128, 17, 2)):  # constructor parameter is a list
+    def __init__(self, fc_param, rl_param = (128, 18, 2)):  # constructor parameter is a list
         super(relationNet, self).__init__()
         self.fc_param = fc_param
         self.mlp = FC2LayersShortcut(*fc_param)

@@ -11,6 +11,7 @@ from randomWalk import *
 import rospy
 import sys
 import numpy as np
+import random
 
 class Env(randomWalk):
     def __init__(self, env_id, robot_num=4, inner_dist = 1.5):
@@ -38,8 +39,11 @@ class Env(randomWalk):
 
             if sys.argv[1] == '-t1':
                 for _ in range(20):
-                    update = self.step(vel=((0.2, 0.2), (0.1, 0)), goal=((0.5, 0.5), (0.5, 0.5)))
+                    update = self.step(vel=((0.2, 0.2), (0.1, 0)), goals=((0.5, 0.5), (0.5, 0.5)))
                 print update
+
+    def generateGoal(self):
+        return (random.uniform(2,8), random.uniform(2,8))
 
     def reset(self):
         if self.env_id == 0:
@@ -68,17 +72,17 @@ class Env(randomWalk):
                 return None
 
 
-    def step(self, vel, goal):
+    def step(self, vel, goals):
         """
         :param vel: velocities of all robots, tuple
-        :param goal: goals of all robots, tuple
+        :param goals: goals of all robots, tuple
         :return: updated states, tuple; rewards for all robots, tuple; termination status, bool.
         """
         if self.env_id == 0:
             state = self.getState()
             self.action(group_id=0, vel=vel)
             state_ = self.getState()
-            reward, done = self.calcReward(state, state_, ((0.5,0.5),(0.5,0.5)))
+            reward, done = self.calcReward(state, state_, goals)
             return state_, reward, done
 
         elif self.env_id == 1:
@@ -93,7 +97,7 @@ class Env(randomWalk):
         """
         if self.env_id == 0:
             r = self._rewardFnc1(state_)  # relation reward
-            reward = np.array((r, r))
+            reward = np.array((r, r)).astype(np.float32)
             r = self._rewardFnc2(self._center(state_), goal[0])  # goal reward
             if r == 1.0:
                 done = True
