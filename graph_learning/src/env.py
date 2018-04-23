@@ -42,8 +42,28 @@ class Env(randomWalk):
                     update = self.step(vel=((0.2, 0.2), (0.1, 0)), goals=((0.5, 0.5), (0.5, 0.5)))
                 print update
 
+            if sys.argv[1] == '-e1':
+                vel = ((0, 0.3), (0.1, 0.1), (0.2, 0.2), (0, 0.2))
+                goals = ((0.5, 0.5), (0.5, 0.5), (0.5, 0.5), (0.5, 0.5))
+                state, reward, done = self.step(vel, goals)
+                print len(state)
+                print state
+                print len(reward)
+                print reward
+                print len(done)
+                print done
+
     def generateGoal(self):
-        return (random.uniform(2,8), random.uniform(2,8))
+        if self.env_id == 0:
+            return (random.uniform(2,8), random.uniform(2,8))
+        elif self.env_id == 1:
+            states = self.getState()
+            state_0 = states[:2]
+            state_1 = states[2:]
+            c0 = self._center(state_0)
+            c1 = self._center(state_1)
+            return c1, c1, c0, c0
+
 
     def reset(self):
         if self.env_id == 0:
@@ -66,7 +86,8 @@ class Env(randomWalk):
 
             try:
                 self.clinet = rospy.ServiceProxy('/random_group', randomWalkSRV)
-                return self.clinet(groupID=1, time=5)
+                if self.clinet(groupID=1, time=5):
+                    return self.states.robots
             except rospy.ServiceException, e:
                 print "Service call failed: %s" % e
                 return None
@@ -86,7 +107,26 @@ class Env(randomWalk):
             return state_, reward, done
 
         elif self.env_id == 1:
-            pass
+            states = self.getState()
+            state_0 = states[:2]
+            state_1 = states[2:]
+            vel_0 = vel[:2]
+            vel_1 = vel[2:]
+            goals_0 = goals[:2]
+            goals_1 = goals[2:]
+
+            self.action(group_id=0, vel=vel_0)
+            self.action(group_id=1, vel=vel_1)
+            states_ = self.getState()
+            state_0_ = states_[:2]
+            state_1_ = states_[2:]
+
+
+            reward_0, done_0 = self.calcReward(state_0, state_0_, goals_0)
+            reward_1, done_1 = self.calcReward(state_1, state_1_, goals_1)
+
+            return state_0_ + state_1_, np.concatenate((reward_0, reward_1)), (done_0, done_1)
+
 
 
     def calcReward(self, state, state_, goal):
@@ -95,26 +135,25 @@ class Env(randomWalk):
         :param goal: goals of robots in ONE group, tuple
         :return: rewards for all the robots, tuple;
         """
-        if self.env_id == 0:
-            r = self._rewardFnc1(state_)  # relation reward
-            reward = np.array((r, r)).astype(np.float32)
-            r = self._rewardFnc2(self._center(state_), goal[0])  # goal reward
-            if r == 1.0:
-                done = True
-            else:
-                done = False
-            reward += r
-            reward += self._rewardFnc3(state, state_, goal[0])  # progress reward
-            reward += np.array(self._rewardFnc4(state))  # collision wall reward
+        r = self._rewardFnc1(state_)  # relation reward
+        reward = np.array((r, r)).astype(np.float32)
+        r = self._rewardFnc2(self._center(state_), goal[0])  # goal reward
+        if r == 1.0:
+            done = True
+        else:
+            done = False
+        reward += r
+        reward += self._rewardFnc3(state, state_, goal[0])  # progress reward
+        reward += np.array(self._rewardFnc4(state))  # collision wall reward
 
-            cls = [robot.collision for robot in self.states.robots]
-            if any(cls):
-                rospy.logerr("collision")
-                done = True
-            return reward, done
+        cls = [robot.collision for robot in self.states.robots]
+        if any(cls):
+            rospy.logerr("collision")
+            done = True
+            reward -= 0.5
+        return reward, done
 
-        elif self.env_id == 1:
-            pass
+
 
 
     def _rewardFnc1(self, state):
@@ -221,7 +260,7 @@ class Env(randomWalk):
 
 if __name__ == '__main__':
     rospy.init_node('env', anonymous=False)
-    env = Env(env_id=0, robot_num=2)
+    env = Env(env_id=1, robot_num=4)
     try:
         rospy.spin()
     except KeyboardInterrupt:
